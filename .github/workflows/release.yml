@@ -1,8 +1,4 @@
 name: Release Package
-
-# need to setup:
-# secrets.PYPI_PASSWORD (See: https://pypi.org/help/#apitoken)
-
 on:
   push:
     tags:
@@ -42,25 +38,10 @@ jobs:
       - uses: actions/checkout@v3
         with:
           persist-credentials: false
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - name: Build and publish to pypi
+        uses: JRubics/poetry-publish@v1.16
         with:
-          python-version: "3.x"
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install setuptools wheel twine
-      - name: Build
-        run: |
-          python setup.py sdist bdist_wheel
-      - name: Publish a Python distribution to PyPI
-        if: startsWith(github.event.ref, 'refs/tags') || github.event_name == 'release'
-        uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_PASSWORD }}
-          skip_existing: true
-          verbose: true
+          pypi_token: ${{ secrets.PYPI_TOKEN }}
   ghcr:
     needs: release
     runs-on: ubuntu-latest

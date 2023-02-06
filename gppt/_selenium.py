@@ -17,8 +17,8 @@ from typing import Any, cast
 from urllib.parse import urlencode
 from urllib.request import getproxies
 
-import pyderman
 import requests
+from autoselenium import Driver  # type: ignore[import]
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
@@ -44,9 +44,7 @@ OptionsType = webdriver.chrome.options.Options
 class GetPixivToken:
     def __init__(self) -> None:
         self.caps = DesiredCapabilities.CHROME.copy()
-        self.caps["goog:loggingPrefs"] = {
-            "performance": "ALL"
-        }  # enable performance logs
+        self.caps["goog:loggingPrefs"] = {"performance": "ALL"}  # enable performance logs
 
     def login(
         self,
@@ -58,22 +56,11 @@ class GetPixivToken:
         self.username = username
         self.password = password
 
-        executable_path = shutil.which("chromedriver")
-        if executable_path is None:
-            installed_executable_path = pyderman.install(
-                verbose=False, browser=pyderman.chrome
-            )
+        driver_executable_path = shutil.which("chromedriver")
 
-            if not isinstance(installed_executable_path, str):
-                raise ValueError("Executable path is not str somehow.")
-
-            executable_path = installed_executable_path
-
-        self.driver = webdriver.Chrome(
-            executable_path=executable_path,
-            options=self.__get_chrome_option(headless),
-            desired_capabilities=self.caps,
-        )
+        self.driver = Driver(
+            "chrome", driver_path=driver_executable_path, driver_options=self.__get_chrome_option(headless)
+        ).driver
 
         code_verifier, code_challenge = self.__oauth_pkce()
         login_params = {
@@ -90,7 +77,7 @@ class GetPixivToken:
 
         self.__fill_login_form()
         sleep(uniform(0.3, 0.7))
-        self.__try_login()
+        self.__login()
 
         # filter code url from performance logs
         code = self.__parse_log()
@@ -143,9 +130,7 @@ class GetPixivToken:
             self.__slow_type(el, self.username)
 
         if self.password:
-            el = self.driver.find_element(
-                By.XPATH, "//input[@autocomplete='current-password']"
-            )
+            el = self.driver.find_element(By.XPATH, "//input[@autocomplete='current-password']")
             self.__slow_type(el, self.password)
 
     @staticmethod
@@ -154,15 +139,10 @@ class GetPixivToken:
             elm.send_keys(character)
             sleep(uniform(0.3, 0.7))
 
-    def __try_login(self) -> None:
+    def __login(self) -> None:
         if self.headless:
-            label_selectors = [
-                f"contains(text(), '{label}')"
-                for label in ["ログイン", "Login", "登录", "로그인", "登入"]
-            ]
-            el = self.driver.find_element(
-                By.XPATH, f"//button[@type='submit'][{' or '.join(label_selectors)}]"
-            )
+            label_selectors = [f"contains(text(), '{label}')" for label in ["ログイン", "Login", "登录", "로그인", "登入"]]
+            el = self.driver.find_element(By.XPATH, f"//button[@type='submit'][{' or '.join(label_selectors)}]")
             el.send_keys(Keys.ENTER)
 
         WebDriverWait(self.driver, 60).until_not(
@@ -176,10 +156,7 @@ class GetPixivToken:
             sleep(1)
         else:
             self.driver.close()
-            raise ValueError(
-                "Failed to login. Please check your information or proxy. "
-                "(Maybe restricted by pixiv?)"
-            )
+            raise ValueError("Failed to login. Please check your information or proxy. " "(Maybe restricted by pixiv?)")
 
     @staticmethod
     def __get_chrome_option(headless: bool | None) -> OptionsType:
@@ -227,18 +204,10 @@ class GetPixivToken:
 
     def __parse_log(self) -> str | None:
         perf_log: list[dict[str, str | int]]
-        perf_log = self.driver.get_log("performance")  # type: ignore[no-untyped-call]
+        perf_log = self.driver.get_log("performance")
+        messages = [json.loads(row["message"]) for row in perf_log if "message" in row and type(row["message"]) is str]
         messages = [
-            json.loads(row["message"])
-            for row in perf_log
-            if "message" in row and type(row["message"]) is str
-        ]
-        messages = [
-            message["message"]
-            for message in messages
-            if "message" in message
-            and "method" in message["message"]
-            and message["message"]["method"] == "Network.requestWillBeSent"
+            message["message"] for message in messages if message["message"]["method"] == "Network.requestWillBeSent"
         ]
 
         for message in messages:

@@ -77,9 +77,7 @@ def parse() -> argparse.Namespace:
 
     subparsers = parser.add_subparsers()
 
-    login_parser = subparsers.add_parser(
-        "login", aliases=["l"], help="retrieving auth token"
-    )
+    login_parser = subparsers.add_parser("login", aliases=["l"], help="retrieving auth token")
     login_parser.add_argument(
         "-u",
         "--username",
@@ -94,22 +92,14 @@ def parse() -> argparse.Namespace:
         type=str,
         help="your current pixiv password",
     )
-    login_parser.add_argument(
-        "-j", "--json", action="store_true", help="output response as json"
-    )
+    login_parser.add_argument("-j", "--json", action="store_true", help="output response as json")
     login_parser.set_defaults(func=func_login)
 
-    logini_parser = subparsers.add_parser(
-        "login-interactive", aliases=["li"], help="`login` in interactive mode"
-    )
-    logini_parser.add_argument(
-        "-j", "--json", action="store_true", help="output response as json"
-    )
+    logini_parser = subparsers.add_parser("login-interactive", aliases=["li"], help="`login` in interactive mode")
+    logini_parser.add_argument("-j", "--json", action="store_true", help="output response as json")
     logini_parser.set_defaults(func=func_logini)
 
-    loginh_parser = subparsers.add_parser(
-        "login-headless", aliases=["lh"], help="`login` in headless mode"
-    )
+    loginh_parser = subparsers.add_parser("login-headless", aliases=["lh"], help="`login` in headless mode")
     loginh_parser.add_argument(
         "-u",
         "--username",
@@ -126,17 +116,11 @@ def parse() -> argparse.Namespace:
         required=True,
         help="your current pixiv password",
     )
-    loginh_parser.add_argument(
-        "-j", "--json", action="store_true", help="output response as json"
-    )
+    loginh_parser.add_argument("-j", "--json", action="store_true", help="output response as json")
     loginh_parser.set_defaults(func=func_loginh)
 
-    refresh_parser = subparsers.add_parser(
-        "refresh", aliases=["r"], help="refresh tokens"
-    )
-    refresh_parser.add_argument(
-        "-j", "--json", action="store_true", help="output response as json"
-    )
+    refresh_parser = subparsers.add_parser("refresh", aliases=["r"], help="refresh tokens")
+    refresh_parser.add_argument("-j", "--json", action="store_true", help="output response as json")
     refresh_parser.add_argument("refresh_token")
     refresh_parser.set_defaults(func=func_refresh)
 
