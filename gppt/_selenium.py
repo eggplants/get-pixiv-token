@@ -16,6 +16,7 @@ from time import sleep
 from typing import Any, cast
 from urllib.parse import urlencode
 from urllib.request import getproxies
+from pathlib import Path
 
 import requests
 from autoselenium import Driver  # type: ignore[import]
@@ -59,7 +60,7 @@ class GetPixivToken:
         driver_executable_path = shutil.which("chromedriver")
 
         self.driver = Driver(
-            "chrome", driver_path=driver_executable_path, driver_options=self.__get_chrome_option(headless)
+            "chrome", driver_path=driver_executable_path, driver_options=self.__get_chrome_option(headless), root=Path().home() / ".chromedriver"
         ).driver
 
         code_verifier, code_challenge = self.__oauth_pkce()
